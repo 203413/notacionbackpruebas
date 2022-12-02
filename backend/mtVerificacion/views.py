@@ -6,6 +6,10 @@ from rest_framework import status
 import json
 from turing_machine import TuringMachine
 from automata.fa.dfa import DFA
+from nltk import CFG
+from nltk.parse.generate import generate
+from nltk.corpus import words
+import random
 
 # Create your views here.
 
@@ -132,3 +136,67 @@ class Calculo(APIView):
                 responseOk=self.createJson("succes","202","No valido")
                 return Response(responseOk)
 
+
+class Quiz(APIView): 
+    # def consultar(p1,p2,p3,p4,p5,value):
+    #     if value == 0:
+    #         r1 = p1
+    #         r2 = p2
+    #         r3 = p3
+    #         r4 = p4
+    #         r5 = p5
+
+    def createJson(self,p1,p2,p3,p4,p5):
+        custom={"p1":p1,"p2":p2,"p3":p3,"p4":p4,"p5":p5,}
+        auxiliar=json.dumps(custom)
+        responseOk=json.loads(auxiliar)
+        return responseOk
+
+    def get(self, request, format=None):
+        # Crear preguntas
+        correctos = CFG.fromstring("""
+            S -> KI VC VC V KF 
+            KI -> '{' 
+            VC -> V C
+            KF -> '}'
+            V -> ' a' | ' b' | ' c' | ' d' | ' e' | ' f' | ' 1' | ' 2' | ' 3' | ' 4' | ' 5' | ' 6' | ' 7' | ' 8' | ' 9' | ' 0'
+            C -> ','
+        """)
+
+        erroneos = CFG.fromstring("""
+            S -> KI VE KF 
+            KI -> '{' | '['
+            VE -> VX VC V | VC VX V | VC VC VX | VC VC VC
+            KF ->  '}' | ' '
+            VX -> ' a)' | ' b,' | ', c' | ' (e,)' | ' f(,' | ' 4),' | ' 5)' | ' 6,' | ' 7,,' | ' (8),'
+            VC -> V C
+            V -> ' a' | ' b' | ' c' | ' d' | ' e' | ' f' | ' 1' | ' 2' | ' 3' | ' 4' | ' 5' | ' 6' | ' 7' | ' 8' | ' 9' | ' 0'
+            C -> ','
+        """)
+        cBuenos = []
+        cMalos = []
+        valor=0
+        vran1=random.randint(1,4095)
+        vran2=random.randint(1,4095)
+        vran3=random.randint(1,4095)
+        for s in generate(correctos,n=4095):
+            #print(''.join(s))
+            valor = ''.join(s)
+            cBuenos.append(valor)
+
+        for s in generate(erroneos,n=6095):
+            #print(''.join(s))
+            valor = ''.join(s)
+            cMalos.append(valor)
+        print('hola')
+
+        p1 = random.randint(1,4)
+        p2 = cBuenos[vran1] + '|' + cBuenos[vran2] + '|' + cMalos[vran3] + '|' + str(random.randint(1,4))
+        p3 = random.randint(1,4)
+        p4 = cMalos[vran1] + '|' + cMalos[vran2] + '|' + cBuenos[vran3] + '|' + str(random.randint(1,3))
+        p5 = random.randint(1,4)
+        print(p4)
+        responseOk=self.createJson(p1,p2,p3,p4,p5)
+        return Response(responseOk) 
+
+        
